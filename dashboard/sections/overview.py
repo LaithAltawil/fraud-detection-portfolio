@@ -48,21 +48,18 @@ documents honestly what worked and what did not.
     )
 
     st.markdown("### How the project fits together")
-    st.markdown(
-        """
-<div class="step"><b>1 · Data layer</b> — five raw files exposed as DuckDB views and
-joined into one enriched fact table (13.3M rows, out-of-core).</div>
-<div class="step"><b>2 · Exploratory analysis</b> — fraud by time, hour, weekday,
-category and channel on the 8.9M labeled transactions.</div>
-<div class="step"><b>3 · Causal features</b> — prior-only behavioural signals
-(velocity, amount z-score, merchant novelty), split chronologically 70/15/15.</div>
-<div class="step"><b>4 · Supervised model</b> — logistic baseline vs LightGBM,
-evaluated with PR-AUC, recall@FPR and a business cost curve.</div>
-<div class="step"><b>5 · Unsupervised extension</b> — Isolation Forest and LOF
-benchmarked against the labels (negative result).</div>
-        """,
-        unsafe_allow_html=True,
-    )
+    steps = [
+        ("1 · Data layer", "five raw files exposed as DuckDB views and joined into one enriched fact table (13.3M rows, out-of-core)."),
+        ("2 · Exploratory analysis", "fraud by time, hour, weekday, category and channel on the 8.9M labeled transactions."),
+        ("3 · Causal features", "prior-only behavioural signals (velocity, amount z-score, merchant novelty), split chronologically 70/15/15."),
+        ("4 · Supervised model", "logistic baseline vs LightGBM, evaluated with PR-AUC, recall@FPR and a business cost curve."),
+        ("5 · Unsupervised extension", "Isolation Forest and LOF benchmarked against the labels (negative result)."),
+    ]
+    for title, description in steps:
+        st.markdown(
+            f'<div class="step"><b>{title}</b> — {description}</div>',
+            unsafe_allow_html=True,
+        )
 
     st.markdown("### Data at a glance")
     st.markdown(

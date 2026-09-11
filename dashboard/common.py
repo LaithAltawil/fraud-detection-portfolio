@@ -120,18 +120,16 @@ def style_fig(fig: go.Figure, height: int = 360, title: str = "") -> go.Figure:
 
 
 def hero() -> None:
-    st.markdown(
-        """
-        <div class="hero">
-          <h1>Credit-Card Fraud Detection</h1>
-          <p>An end-to-end machine learning system on 13.3M card transactions (0.10% fraud).</p>
-          <span class="pill">DuckDB</span><span class="pill">Polars</span>
-          <span class="pill">LightGBM</span><span class="pill">scikit-learn</span>
-          <span class="pill">Streamlit</span>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    html = (
+        '<div class="hero">'
+        "<h1>Credit-Card Fraud Detection</h1>"
+        "<p>An end-to-end machine learning system on 13.3M card transactions (0.10% fraud).</p>"
+        '<span class="pill">DuckDB</span><span class="pill">Polars</span>'
+        '<span class="pill">LightGBM</span><span class="pill">scikit-learn</span>'
+        '<span class="pill">Streamlit</span>'
+        "</div>"
     )
+    st.markdown(html, unsafe_allow_html=True)
 
 
 def callout(text: str, kind: str = "") -> None:

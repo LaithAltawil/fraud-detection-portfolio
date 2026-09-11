@@ -1,0 +1,92 @@
+[
+  {
+    "merchant_id": 60569,
+    "city": "ONLINE",
+    "category": "Wholesale Clubs",
+    "frauds": 764
+  },
+  {
+    "merchant_id": 27092,
+    "city": "ONLINE",
+    "category": "Money Transfer",
+    "frauds": 725
+  },
+  {
+    "merchant_id": 48919,
+    "city": "ONLINE",
+    "category": "Department Stores",
+    "frauds": 332
+  },
+  {
+    "merchant_id": 99370,
+    "city": "ONLINE",
+    "category": "Department Stores",
+    "frauds": 302
+  },
+  {
+    "merchant_id": 32858,
+    "city": "ONLINE",
+    "category": "Department Stores",
+    "frauds": 289
+  },
+  {
+    "merchant_id": 76639,
+    "city": "ONLINE",
+    "category": "Electronics Stores",
+    "frauds": 286
+  },
+  {
+    "merchant_id": 83018,
+    "city": "Rome",
+    "category": "Discount Stores",
+    "frauds": 236
+  },
+  {
+    "merchant_id": 67570,
+    "city": "ONLINE",
+    "category": "Department Stores",
+    "frauds": 225
+  },
+  {
+    "merchant_id": 31893,
+    "city": "ONLINE",
+    "category": "Department Stores",
+    "frauds": 214
+  },
+  {
+    "merchant_id": 34490,
+    "city": "ONLINE",
+    "category": "Miscellaneous Home Furnishing Stores",
+    "frauds": 197
+  },
+  {
+    "merchant_id": 47399,
+    "city": "ONLINE",
+    "category": "Digital Goods - Media, Books, Apps",
+    "frauds": 176
+  },
+  {
+    "merchant_id": 59474,
+    "city": "ONLINE",
+    "category": "Passenger Railways",
+    "frauds": 151
+  },
+  {
+    "merchant_id": 18215,
+    "city": "ONLINE",
+    "category": "Miscellaneous Home Furnishing Stores",
+    "frauds": 150
+  },
+  {
+    "merchant_id": 88260,
+    "city": "Rome",
+    "category": "Grocery Stores, Supermarkets",
+    "frauds": 149
+  },
+  {
+    "merchant_id": 41375,
+    "city": "Rome",
+    "category": "Drug Stores and Pharmacies",
+    "frauds": 147
+  }
+]

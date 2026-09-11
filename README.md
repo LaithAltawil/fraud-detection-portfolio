@@ -102,16 +102,17 @@ screening layer, not a decision-maker.
 
 ## Interactive dashboard (multipage)
 
-An eight-page Streamlit app walks through **everything done with the data**, from
-raw files to model insights. Use the sidebar to navigate:
+A nine-page Streamlit app walks through **everything done with the data**, from
+raw files to a detailed explanation of the results. Use the sidebar to navigate:
 
 | Page | What it explains |
 |---|---|
 | **Executive summary** | The problem, KPIs, headline results, honest negative result, pipeline at a glance |
 | **Data & pipeline** | The five raw files, every data-quality quirk handled, the DuckDB joins, why out-of-core |
-| **Exploratory analysis** | Fraud by time, hour, weekday, category and channel — and what it implies |
+| **Exploratory analysis** | 13 charts: fraud by year/month/hour/weekday/night/weekend, amount distributions, category, channel, card brand/type, credit band, geography and top merchants — each with interpretation |
 | **Features & split** | The causal window-function features, the feature table, the 70/15/15 chronological split |
 | **Supervised model** | Baseline vs LightGBM, PR curve, feature importance, business-cost curve, riskiest transactions |
+| **Results, explained** | What each metric means, ROC/PR curves, confusion matrix at the cost-optimal threshold, decile lift, budget trade-offs, dollar savings |
 | **Unsupervised extension** | Isolation Forest / LOF vs supervised, anomaly scores, why it failed |
 | **Models & usage** | What each of the four models is for and how to run it |
 | **Insights** | What drives detection, engineering decisions, next steps |

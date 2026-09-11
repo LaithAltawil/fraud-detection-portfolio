@@ -1,0 +1,22 @@
+[
+  {
+    "card_brand": "Mastercard",
+    "n": 4795682,
+    "fraud_rate": 0.0014823752
+  },
+  {
+    "card_brand": "Visa",
+    "n": 3321615,
+    "fraud_rate": 0.0014511013
+  },
+  {
+    "card_brand": "Amex",
+    "n": 572424,
+    "fraud_rate": 0.0016141881
+  },
+  {
+    "card_brand": "Discover",
+    "n": 225242,
+    "fraud_rate": 0.0021266016
+  }
+]

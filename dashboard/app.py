@@ -25,6 +25,7 @@ from sections import (  # noqa: E402
     insights,
     models,
     overview,
+    results,
     supervised,
     unsupervised,
 )
@@ -43,6 +44,7 @@ nav = st.navigation(
         st.Page(eda.render, title="Exploratory analysis", icon="🔎", url_path="eda"),
         st.Page(features.render, title="Features & split", icon="🧮", url_path="features"),
         st.Page(supervised.render, title="Supervised model", icon="🏆", url_path="supervised"),
+        st.Page(results.render, title="Results, explained", icon="📈", url_path="results"),
         st.Page(unsupervised.render, title="Unsupervised extension", icon="🧪", url_path="unsupervised"),
         st.Page(models.render, title="Models & usage", icon="🤖", url_path="models"),
         st.Page(insights.render, title="Insights", icon="💡", url_path="insights"),

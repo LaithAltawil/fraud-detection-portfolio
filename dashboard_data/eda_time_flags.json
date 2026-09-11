@@ -1,0 +1,26 @@
+[
+  {
+    "is_night": 0,
+    "is_weekend": 0,
+    "n": 6000001,
+    "fraud_rate": 0.0014759998
+  },
+  {
+    "is_night": 0,
+    "is_weekend": 1,
+    "n": 2399089,
+    "fraud_rate": 0.0016235329
+  },
+  {
+    "is_night": 1,
+    "is_weekend": 0,
+    "n": 368223,
+    "fraud_rate": 0.0010754353
+  },
+  {
+    "is_night": 1,
+    "is_weekend": 1,
+    "n": 147650,
+    "fraud_rate": 0.0012529631
+  }
+]

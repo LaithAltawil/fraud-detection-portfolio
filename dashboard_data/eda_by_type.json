@@ -1,0 +1,17 @@
+[
+  {
+    "card_type": "Debit",
+    "n": 5548196,
+    "fraud_rate": 0.0013453021
+  },
+  {
+    "card_type": "Credit",
+    "n": 2753467,
+    "fraud_rate": 0.0016306714
+  },
+  {
+    "card_type": "Debit (Prepaid)",
+    "n": 613300,
+    "fraud_rate": 0.0022468612
+  }
+]
