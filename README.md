@@ -38,17 +38,19 @@ Every stage writes a reproducible artifact to `artifacts/`:
 | Features | `scripts/02_build_features.py` | `artifacts/features.parquet` |
 | Supervised | `scripts/03_train.py` | `artifacts/lightgbm_fraud.joblib`, `artifacts/metrics.json` |
 | Unsupervised | `scripts/04_unsupervised.py` | `artifacts/unsupervised_scores.parquet` |
+| Dashboard bundle | `scripts/06_export_dashboard.py` | `dashboard_data/` (small, committed) |
 | Dashboard | `scripts/05_dashboard.py` | Streamlit app |
 
 ## Quickstart
 
 ```bash
-uv sync                      # or: pip install -r requirements.txt
+uv sync --extra dashboard    # or: pip install -r requirements.txt
 uv run python scripts/01_eda.py
 uv run python scripts/02_build_features.py
 uv run python scripts/03_train.py
 uv run python scripts/04_unsupervised.py
-uv run streamlit run src/fraud_detection/dashboard.py
+uv run python scripts/06_export_dashboard.py   # build dashboard_data/ bundle
+uv run python scripts/05_dashboard.py          # launch the app
 ```
 
 The raw data is expected at `../archive` (see `config/config.yaml`). Set
@@ -63,8 +65,9 @@ The raw data is expected at `../archive` (see `config/config.yaml`). Set
   prediction never peeks at its own label or future events.
 - **Cost-aware threshold.** The decision threshold is chosen to minimise
   `FN × $200 + FP × $5`, not to maximise accuracy.
-- **Class imbalance.** Handled with `scale_pos_weight` and evaluated on the
-  precision-recall curve.
+- **Class imbalance.** Deliberately **not** handled with `scale_pos_weight` —
+  it collapsed ranking (ROC 0.93 → 0.60). Imbalance is handled by ranking
+  metrics plus the cost-based threshold.
 
 ## Results
 
@@ -97,6 +100,32 @@ subtle deviations matter. This is a genuine finding, not a bug: it shows why
 label-supervised methods dominate and frames unsupervised detection as a
 screening layer, not a decision-maker.
 
+## Interactive dashboard
+
+A single Streamlit app tells the whole story in six sections:
+
+1. **Executive summary** — KPIs, headline results, honest negative result.
+2. **Data & EDA** — dataset facts, fraud by time / hour / weekday / category / channel.
+3. **Supervised model** — baseline vs LightGBM, PR curve, feature importance,
+   business-cost curve, riskiest transactions.
+4. **Unsupervised extension** — Isolation Forest / LOF vs supervised, anomaly scores.
+5. **Models & usage** — what each of the four models is for and how to run it.
+6. **Insights** — what drives detection and next steps.
+
+The app reads a small, committed `dashboard_data/` bundle (a few hundred KB)
+produced by `scripts/06_export_dashboard.py`, so it runs with **no raw data** and
+deploys without shipping the 1.2 GB dataset.
+
+### Deploy to Streamlit Community Cloud (shareable link)
+
+1. Push this repo (done).
+2. Go to <https://share.streamlit.io> → **New app** → pick this repo.
+3. **Main file path:** `src/fraud_detection/dashboard.py`
+4. Deploy. Streamlit installs `requirements.txt` and serves the app from the
+   committed `dashboard_data/` bundle — no data upload needed.
+
+The `.streamlit/config.toml` theme is applied automatically.
+
 ## What I learned (interview talking points)
 
 - **`scale_pos_weight` backfired.** Naively weighting the 1:1000 imbalance
@@ -124,12 +153,16 @@ src/fraud_detection/
   evaluate.py               # PR-AUC, recall@FPR, precision@k, cost curve
   train.py                  # logistic baseline + LightGBM
   unsupervised.py           # Isolation Forest / LOF extension
-  dashboard.py              # Streamlit analytics
+  export_dashboard.py       # build the small dashboard_data/ bundle
+  dashboard.py              # unified Streamlit analytics app
 scripts/
   01_eda.py                 # summary + report figures
   02_build_features.py      # build artifacts/features.parquet
   03_train.py               # train + evaluate + save artifacts
   04_unsupervised.py        # anomaly-detection extension
   05_dashboard.py           # launch Streamlit
+  06_export_dashboard.py    # build dashboard_data/ for the deployed app
+dashboard_data/             # small, committed bundle that powers the dashboard
+.streamlit/config.toml      # dashboard theme
 tests/                      # unit tests for the label parser, features, metrics
 ```

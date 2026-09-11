@@ -37,3 +37,7 @@ Thumbs.db
 # Reports (keep .gitkeep, ignore generated figures)
 reports/figures/*
 !reports/figures/.gitkeep
+
+# Small, shareable dashboard bundle (safe to commit, powers the deployed app)
+!dashboard_data/
+!dashboard_data/**

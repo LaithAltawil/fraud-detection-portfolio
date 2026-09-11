@@ -1,0 +1,82 @@
+[
+  {
+    "feature": "card_merchant_prior_count",
+    "gain": 160119.19521903992
+  },
+  {
+    "feature": "sec_since_prev_txn",
+    "gain": 83973.86095619202
+  },
+  {
+    "feature": "merchant_prior_count",
+    "gain": 54174.767402648926
+  },
+  {
+    "feature": "txn_hour",
+    "gain": 47028.244435310364
+  },
+  {
+    "feature": "amount_dev_from_prior_avg",
+    "gain": 43284.341051101685
+  },
+  {
+    "feature": "amount_to_limit",
+    "gain": 32747.7671585083
+  },
+  {
+    "feature": "amount_z",
+    "gain": 31914.657420158386
+  },
+  {
+    "feature": "amount",
+    "gain": 24332.78685951233
+  },
+  {
+    "feature": "card_prior_txn_count",
+    "gain": 22626.41861629486
+  },
+  {
+    "feature": "card_prior_max_amount",
+    "gain": 16579.68143081665
+  },
+  {
+    "feature": "txn_dow",
+    "gain": 12434.50650024414
+  },
+  {
+    "feature": "per_capita_income",
+    "gain": 12362.079087257385
+  },
+  {
+    "feature": "credit_limit",
+    "gain": 10073.281192779541
+  },
+  {
+    "feature": "card_prior_std_amount",
+    "gain": 9176.070559501648
+  },
+  {
+    "feature": "card_prior_avg_amount",
+    "gain": 6068.827018737793
+  },
+  {
+    "feature": "yearly_income",
+    "gain": 5809.40703868866
+  },
+  {
+    "feature": "num_credit_cards",
+    "gain": 5190.352213859558
+  },
+  {
+    "feature": "txn_month",
+    "gain": 5154.791395187378
+  },
+  {
+    "feature": "credit_score",
+    "gain": 5107.881485939026
+  },
+  {
+    "feature": "total_debt",
+    "gain": 4647.102515220642
+  }
+]

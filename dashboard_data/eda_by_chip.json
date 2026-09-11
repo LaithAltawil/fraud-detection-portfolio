@@ -1,0 +1,17 @@
+[
+  {
+    "use_chip": "Online Transaction",
+    "fraud_rate": 0.0084092052,
+    "n": 1043975
+  },
+  {
+    "use_chip": "Chip Transaction",
+    "fraud_rate": 0.0009916398,
+    "n": 3202776
+  },
+  {
+    "use_chip": "Swipe Transaction",
+    "fraud_rate": 0.0002949738,
+    "n": 4668212
+  }
+]

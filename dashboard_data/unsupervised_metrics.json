@@ -1,0 +1,40 @@
+{
+  "isolation_forest": {
+    "pr_auc": 0.0013520344686936627,
+    "roc_auc": 0.39569346100157776,
+    "recall_at_fpr": {
+      "recall@fpr=0.001": 0.0,
+      "recall@fpr=0.005": 0.00042498937526561835,
+      "recall@fpr=0.010": 0.0025499362515937103,
+      "recall@fpr=0.050": 0.020399490012749683
+    },
+    "precision_at_k": {
+      "precision@top0.1%": 0.0,
+      "precision@top1%": 0.0004486987735566856
+    },
+    "best_threshold": 0.7293846812028687,
+    "total_cost": 470605.0,
+    "cost_per_txn": 0.3519218272221279,
+    "n": 1337243,
+    "n_pos": 2353
+  },
+  "lof": {
+    "pr_auc": 0.0024864447477962208,
+    "roc_auc": 0.5491048093709817,
+    "recall_at_fpr": {
+      "recall@fpr=0.001": 0.0,
+      "recall@fpr=0.005": 0.010869565217391304,
+      "recall@fpr=0.010": 0.043478260869565216,
+      "recall@fpr=0.050": 0.07608695652173914
+    },
+    "precision_at_k": {
+      "precision@top0.1%": 0.0,
+      "precision@top1%": 0.008
+    },
+    "best_threshold": 20.851551055908203,
+    "total_cost": 18405.0,
+    "cost_per_txn": 0.3681,
+    "n": 50000,
+    "n_pos": 92
+  }
+}

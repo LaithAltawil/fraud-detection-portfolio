@@ -1,0 +1,77 @@
+[
+  {
+    "mcc_desc": "Grocery Stores, Supermarkets",
+    "frauds": 1066833,
+    "fraud_rate": 0.0003983754
+  },
+  {
+    "mcc_desc": "Miscellaneous Food Stores",
+    "frauds": 979396,
+    "fraud_rate": 0.0001337559
+  },
+  {
+    "mcc_desc": "Service Stations",
+    "frauds": 955123,
+    "fraud_rate": 0.0001758936
+  },
+  {
+    "mcc_desc": "Eating Places and Restaurants",
+    "frauds": 669808,
+    "fraud_rate": 0.0001806488
+  },
+  {
+    "mcc_desc": "Drug Stores and Pharmacies",
+    "frauds": 517400,
+    "fraud_rate": 0.0009257828
+  },
+  {
+    "mcc_desc": "Tolls and Bridge Fees",
+    "frauds": 451814,
+    "fraud_rate": 0.0
+  },
+  {
+    "mcc_desc": "Wholesale Clubs",
+    "frauds": 403343,
+    "fraud_rate": 0.0024569659
+  },
+  {
+    "mcc_desc": "Money Transfer",
+    "frauds": 394401,
+    "fraud_rate": 0.0018382306
+  },
+  {
+    "mcc_desc": "Taxicabs and Limousines",
+    "frauds": 335586,
+    "fraud_rate": 0.0008939586
+  },
+  {
+    "mcc_desc": "Fast Food Restaurants",
+    "frauds": 334333,
+    "fraud_rate": 0.000702892
+  },
+  {
+    "mcc_desc": "Automotive Service Shops",
+    "frauds": 320125,
+    "fraud_rate": 4.06091e-05
+  },
+  {
+    "mcc_desc": "Department Stores",
+    "frauds": 318511,
+    "fraud_rate": 0.0070672598
+  },
+  {
+    "mcc_desc": "Drinking Places (Alcoholic Beverages)",
+    "frauds": 166460,
+    "fraud_rate": 0.0008170131
+  },
+  {
+    "mcc_desc": "Discount Stores",
+    "frauds": 165755,
+    "fraud_rate": 0.0051823474
+  },
+  {
+    "mcc_desc": "Utilities - Electric, Gas, Water, Sanitary",
+    "frauds": 162371,
+    "fraud_rate": 0.0
+  }
+]
