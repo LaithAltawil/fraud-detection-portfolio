@@ -1,4 +1,4 @@
-"""Launch the Streamlit dashboard.
+"""Launch the multipage Streamlit dashboard.
 
 Usage:
     uv run python scripts/05_dashboard.py
@@ -10,7 +10,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-APP = Path(__file__).resolve().parents[1] / "src" / "fraud_detection" / "dashboard.py"
+APP = Path(__file__).resolve().parents[1] / "dashboard" / "app.py"
 
 
 def main() -> None:

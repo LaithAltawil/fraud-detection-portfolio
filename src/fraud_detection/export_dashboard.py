@@ -61,6 +61,33 @@ def _cost_curve(scores: np.ndarray, labels: np.ndarray, cfg: Config, n: int = 30
     }
 
 
+def _split_summary(cfg: Config) -> dict:
+    """Chronological split sizes and boundary timestamps (labeled rows only)."""
+    ts = (
+        pl.scan_parquet(cfg.artifacts.features)
+        .select("ts", "is_fraud")
+        .filter(pl.col("is_fraud").is_not_null())
+        .select("ts")
+        .collect()["ts"]
+        .sort()
+    )
+    n = len(ts)
+    t = cfg.split
+    i1 = int(n * t.train_frac)
+    i2 = int(n * (t.train_frac + t.valid_frac))
+    train_end, valid_end = ts[i1], ts[i2]
+    return {
+        "train": int((ts <= train_end).sum()),
+        "valid": int(((ts > train_end) & (ts <= valid_end)).sum()),
+        "test": int((ts > valid_end).sum()),
+        "train_frac": t.train_frac,
+        "valid_frac": t.valid_frac,
+        "test_frac": t.test_frac,
+        "train_end": str(train_end),
+        "valid_end": str(valid_end),
+    }
+
+
 def export_dashboard_data(cfg: Config, force: bool = False) -> Path:
     """Build every aggregate the dashboard needs into ``dashboard_data/``."""
     out = cfg.project_root / BUNDLE_NAME
@@ -86,6 +113,7 @@ def export_dashboard_data(cfg: Config, force: bool = False) -> Path:
         "date_max": str(row[3]),
     }
     _write_json(summary, out / "summary.json")
+    _write_json(_split_summary(cfg), out / "split.json")
 
     # --- EDA aggregates ----------------------------------------------------
     def grouped(sql: str) -> list[dict]:

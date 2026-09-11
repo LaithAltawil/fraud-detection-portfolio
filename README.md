@@ -26,7 +26,7 @@ raw CSVs/JSON ──▶ DuckDB views ──▶ causal feature table (Parquet)
                      │                        │
                      │                        ├─▶ supervised  (LightGBM, cost-aware threshold)
                      │                        ├─▶ unsupervised (Isolation Forest / LOF)
-                     │                        └─▶ dashboard   (Streamlit + DuckDB SQL)
+                     │                        └─▶ dashboard   (multipage Streamlit)
                      └─▶ EDA
 ```
 
@@ -39,7 +39,7 @@ Every stage writes a reproducible artifact to `artifacts/`:
 | Supervised | `scripts/03_train.py` | `artifacts/lightgbm_fraud.joblib`, `artifacts/metrics.json` |
 | Unsupervised | `scripts/04_unsupervised.py` | `artifacts/unsupervised_scores.parquet` |
 | Dashboard bundle | `scripts/06_export_dashboard.py` | `dashboard_data/` (small, committed) |
-| Dashboard | `scripts/05_dashboard.py` | Streamlit app |
+| Dashboard | `scripts/05_dashboard.py` | multipage Streamlit app |
 
 ## Quickstart
 
@@ -50,7 +50,7 @@ uv run python scripts/02_build_features.py
 uv run python scripts/03_train.py
 uv run python scripts/04_unsupervised.py
 uv run python scripts/06_export_dashboard.py   # build dashboard_data/ bundle
-uv run python scripts/05_dashboard.py          # launch the app
+uv run python scripts/05_dashboard.py          # launch the multipage app
 ```
 
 The raw data is expected at `../archive` (see `config/config.yaml`). Set
@@ -100,27 +100,31 @@ subtle deviations matter. This is a genuine finding, not a bug: it shows why
 label-supervised methods dominate and frames unsupervised detection as a
 screening layer, not a decision-maker.
 
-## Interactive dashboard
+## Interactive dashboard (multipage)
 
-A single Streamlit app tells the whole story in six sections:
+An eight-page Streamlit app walks through **everything done with the data**, from
+raw files to model insights. Use the sidebar to navigate:
 
-1. **Executive summary** — KPIs, headline results, honest negative result.
-2. **Data & EDA** — dataset facts, fraud by time / hour / weekday / category / channel.
-3. **Supervised model** — baseline vs LightGBM, PR curve, feature importance,
-   business-cost curve, riskiest transactions.
-4. **Unsupervised extension** — Isolation Forest / LOF vs supervised, anomaly scores.
-5. **Models & usage** — what each of the four models is for and how to run it.
-6. **Insights** — what drives detection and next steps.
+| Page | What it explains |
+|---|---|
+| **Executive summary** | The problem, KPIs, headline results, honest negative result, pipeline at a glance |
+| **Data & pipeline** | The five raw files, every data-quality quirk handled, the DuckDB joins, why out-of-core |
+| **Exploratory analysis** | Fraud by time, hour, weekday, category and channel — and what it implies |
+| **Features & split** | The causal window-function features, the feature table, the 70/15/15 chronological split |
+| **Supervised model** | Baseline vs LightGBM, PR curve, feature importance, business-cost curve, riskiest transactions |
+| **Unsupervised extension** | Isolation Forest / LOF vs supervised, anomaly scores, why it failed |
+| **Models & usage** | What each of the four models is for and how to run it |
+| **Insights** | What drives detection, engineering decisions, next steps |
 
-The app reads a small, committed `dashboard_data/` bundle (a few hundred KB)
-produced by `scripts/06_export_dashboard.py`, so it runs with **no raw data** and
-deploys without shipping the 1.2 GB dataset.
+The app is **standalone** — it reads a small, committed `dashboard_data/` bundle
+(a few hundred KB) produced by `scripts/06_export_dashboard.py`, so it runs with
+**no raw data** and deploys without shipping the 1.2 GB dataset.
 
 ### Deploy to Streamlit Community Cloud (shareable link)
 
 1. Push this repo (done).
 2. Go to <https://share.streamlit.io> → **New app** → pick this repo.
-3. **Main file path:** `src/fraud_detection/dashboard.py`
+3. **Main file path:** `dashboard/app.py`
 4. Deploy. Streamlit installs `requirements.txt` and serves the app from the
    committed `dashboard_data/` bundle — no data upload needed.
 
@@ -154,14 +158,17 @@ src/fraud_detection/
   train.py                  # logistic baseline + LightGBM
   unsupervised.py           # Isolation Forest / LOF extension
   export_dashboard.py       # build the small dashboard_data/ bundle
-  dashboard.py              # unified Streamlit analytics app
 scripts/
   01_eda.py                 # summary + report figures
   02_build_features.py      # build artifacts/features.parquet
   03_train.py               # train + evaluate + save artifacts
   04_unsupervised.py        # anomaly-detection extension
-  05_dashboard.py           # launch Streamlit
+  05_dashboard.py           # launch the multipage Streamlit app
   06_export_dashboard.py    # build dashboard_data/ for the deployed app
+dashboard/                  # multipage Streamlit app (standalone)
+  app.py                    # entrypoint + navigation (deploy main file)
+  common.py                 # shared theme, bundle loaders, plotly helpers
+  sections/                 # one module per page
 dashboard_data/             # small, committed bundle that powers the dashboard
 .streamlit/config.toml      # dashboard theme
 tests/                      # unit tests for the label parser, features, metrics
