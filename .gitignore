@@ -1,0 +1,39 @@
+# Data is large and external - never commit it
+data/
+*.csv
+*.json
+!config/*.json
+
+# Build/runtime artifacts
+artifacts/
+*.parquet
+*.joblib
+*.pkl
+*.onnx
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+dist/
+build/
+
+# Tooling
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Reports (keep .gitkeep, ignore generated figures)
+reports/figures/*
+!reports/figures/.gitkeep

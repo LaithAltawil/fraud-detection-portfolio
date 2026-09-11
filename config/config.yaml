@@ -1,0 +1,67 @@
+# Central configuration for the fraud detection pipeline.
+# Paths are resolved relative to the project root unless absolute.
+
+data:
+  # Folder containing the raw Kaggle-style files. Default points at the sibling
+  # "archive" folder shipped with the dataset.
+  raw_dir: "../archive"
+  files:
+    transactions: "transactions_data.csv"
+    users: "users_data.csv"
+    cards: "cards_data.csv"
+    mcc: "mcc_codes.json"
+    labels: "train_fraud_labels.json"
+
+artifacts:
+  dir: "artifacts"
+  features: "features.parquet"
+  predictions: "predictions.parquet"
+  model: "lightgbm_fraud.joblib"
+  metrics: "metrics.json"
+
+features:
+  # Rows used for a quick local smoke test (null = full 13.3M dataset).
+  sample_rows: null
+  # Number of past transactions used for causal card-level rolling features.
+  rolling_window: 5
+  # Feature ablation result: the high-cardinality categorical / merchant
+  # attributes added noise on this synthetic data (ROC 0.92 -> 0.86 when
+  # included), so the model trains on the behavioural numeric features only.
+  use_categoricals: false
+
+split:
+  # Fractional time-based split. The data is sorted by timestamp and cut
+  # chronologically so the model never sees the future during training.
+  train_frac: 0.70
+  valid_frac: 0.15
+  # test_frac is the remainder
+
+model:
+  random_state: 42
+  params:
+    objective: "binary"
+    n_estimators: 1500
+    learning_rate: 0.05
+    num_leaves: 63
+    min_child_samples: 200
+    subsample: 0.8
+    subsample_freq: 1
+    colsample_bytree: 0.8
+    reg_lambda: 1.0
+    n_jobs: -1
+    verbosity: -1
+  # NOTE: we deliberately do NOT use scale_pos_weight. On this dataset it
+  # collapsed ranking quality (ROC 0.93 -> 0.60); imbalance is instead handled
+  # by ranking metrics + a cost-based decision threshold.
+  early_stopping_rounds: 100
+  metric: "average_precision"
+
+evaluation:
+  # Cost matrix for threshold selection. A missed fraud is far more expensive
+  # than an unnecessary manual review.
+  cost_false_negative: 200.0   # cost of letting a fraud through
+  cost_false_positive: 5.0     # cost of a manual review / false alarm
+  # Operating points we report recall at.
+  fpr_targets: [0.001, 0.005, 0.01, 0.05]
+
+seed: 42
