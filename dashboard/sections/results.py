@@ -6,7 +6,18 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
-from common import ACCENT, INDIGO, MUTED, RED, TEAL, callout, load_json, page_header, style_fig
+from common import (
+    ACCENT,
+    INDIGO,
+    MUTED,
+    RED,
+    TEAL,
+    callout,
+    load_json,
+    metrics_glossary,
+    page_header,
+    style_fig,
+)
 
 
 def _metric_table(test: dict, base: dict) -> pd.DataFrame:
@@ -37,18 +48,8 @@ def render() -> None:
     test, base = m["lightgbm"]["test"], m["baseline"]["test"]
     summary = load_json("summary.json")
 
-    st.markdown("### What the metrics mean")
-    st.markdown(
-        """
-| Metric | Intuition | Why we report it |
-|---|---|---|
-| **ROC-AUC** | Probability a random fraud ranks above a random legit transaction | Familiar summary, but **optimistic** at 0.1% positives |
-| **PR-AUC** | Area under the precision-recall curve | The honest ranking metric for rare positives |
-| **Recall @ x% FPR** | Share of fraud caught while false alarms stay ≤ x% | Matches a real review-team budget |
-| **Precision @ top 0.1%** | Accuracy among the riskiest 0.1% | Tells you if an alert queue is usable |
-| **Cost / txn** | `missed × $200 + false alarm × $5`, per transaction | Puts dollars on the model |
-        """
-    )
+    st.markdown("### What the metrics mean — and why we selected them")
+    metrics_glossary()
 
     st.markdown("### Model comparison (test window)")
     table = _metric_table(test, base)

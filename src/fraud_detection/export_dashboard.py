@@ -227,14 +227,36 @@ def export_dashboard_data(cfg: Config, force: bool = False) -> Path:
             (FORMAT PARQUET, COMPRESSION ZSTD)"""
     )
     # Additional EDA cuts.
+    # Geography: ``merchant_state`` mixes US state codes with country names, so
+    # the US and international cuts are exported separately (otherwise a single
+    # high-fraud country like Italy dominates the US view).
     _write_json(
         grouped(
             f"""SELECT merchant_state AS state, count(*) AS n, avg(is_fraud) AS fraud_rate
-                FROM tx_enriched {labeled} AND merchant_state IS NOT NULL
+                FROM tx_enriched {labeled} AND length(merchant_state) = 2
                 GROUP BY 1 HAVING count(*) > 2000
-                ORDER BY fraud_rate DESC LIMIT 20"""
+                ORDER BY fraud_rate DESC LIMIT 15"""
         ),
         out / "eda_by_state.json",
+    )
+    _write_json(
+        grouped(
+            f"""SELECT merchant_state AS country, count(*) AS n, avg(is_fraud) AS fraud_rate
+                FROM tx_enriched {labeled} AND length(merchant_state) > 2
+                GROUP BY 1 HAVING count(*) > 200
+                ORDER BY fraud_rate DESC LIMIT 15"""
+        ),
+        out / "eda_by_country.json",
+    )
+    _write_json(
+        grouped(
+            f"""SELECT CASE WHEN merchant_state IS NULL THEN 'unknown'
+                             WHEN length(merchant_state) = 2 THEN 'US state'
+                             ELSE 'international' END AS region,
+                       count(*) AS n, avg(is_fraud) AS fraud_rate
+                FROM tx_enriched {labeled} GROUP BY 1 ORDER BY 3 DESC"""
+        ),
+        out / "eda_by_region.json",
     )
     _write_json(
         grouped(
@@ -335,10 +357,14 @@ def export_dashboard_data(cfg: Config, force: bool = False) -> Path:
     _write_json(importance, out / "feature_importance.json")
 
     # --- unsupervised ------------------------------------------------------
-    _write_json(score_unsupervised(cfg), out / "unsupervised_metrics.json")
-    anom = pl.read_parquet(cfg.artifacts.dir / "unsupervised_scores.parquet")
-    if anom.height > 50_000:
-        anom = anom.sample(50_000, seed=cfg.seed)
-    anom.select("anomaly_score", "is_fraud").write_parquet(out / "anomaly_sample.parquet")
+    unsup_path = out / "unsupervised_metrics.json"
+    if force or not unsup_path.exists():
+        _write_json(score_unsupervised(cfg), unsup_path)
+    anom_path = out / "anomaly_sample.parquet"
+    if force or not anom_path.exists():
+        anom = pl.read_parquet(cfg.artifacts.dir / "unsupervised_scores.parquet")
+        if anom.height > 50_000:
+            anom = anom.sample(50_000, seed=cfg.seed)
+        anom.select("anomaly_score", "is_fraud").write_parquet(anom_path)
 
     return out

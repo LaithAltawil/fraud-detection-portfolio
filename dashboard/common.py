@@ -140,3 +140,24 @@ def page_header(title: str, subtitle: str = "") -> None:
     st.markdown(f"## {title}")
     if subtitle:
         st.caption(subtitle)
+
+
+def metrics_glossary() -> None:
+    """Explain every metric and why it was (or was not) chosen."""
+    st.markdown(
+        """
+| Metric | What it measures | Why we use it |
+|---|---|---|
+| **Accuracy** | Share of all predictions that are correct | **Rejected.** At 0.1% fraud, "never fraud" scores 99.9% and catches nothing. |
+| **ROC-AUC** | Chance a random fraud ranks above a random legit transaction | Familiar summary, but **optimistic** when positives are rare. |
+| **PR-AUC** (average precision) | Area under the precision-recall curve | **Headline metric** — it only rewards performance on the rare positive class. |
+| **Recall @ x% FPR** | Share of fraud caught while false alarms stay ≤ x% | Ties performance to a **fixed review budget** a team can staff. |
+| **Precision @ top k%** | Accuracy among the riskiest k% of transactions | Tells you whether an **alert queue is actually usable**. |
+| **Cost / transaction** | `missed_fraud × $200 + false_alarm × $5`, per transaction | Puts a **dollar value** on the exact errors a fraud team trades off. |
+        """
+    )
+    st.caption(
+        "The decision threshold is not 0.5 — it is chosen to minimise the cost above. "
+        "$200 per missed fraud and $5 per manual review are explicit assumptions exposed "
+        "in `config/config.yaml` so they can be re-tuned."
+    )

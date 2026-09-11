@@ -5,7 +5,7 @@ from __future__ import annotations
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from common import RED, callout, load_json, load_parquet, page_header, style_fig
+from common import RED, callout, load_json, load_parquet, metrics_glossary, page_header, style_fig
 
 
 def render() -> None:
@@ -54,6 +54,13 @@ truth for evaluation.
         color_discrete_map={"legitimate": "#CBD5E1", "fraud": RED},
     )
     st.plotly_chart(style_fig(fig, 360), width="stretch")
+
+    with st.expander("How to read the unsupervised metrics"):
+        metrics_glossary()
+        st.markdown(
+            "These detectors produce a **ranking**, so PR-AUC and recall@FPR apply exactly "
+            "as they do for the supervised model — which is what makes the comparison fair."
+        )
 
     callout(
         "<b>Negative result.</b> Isolation Forest (ROC 0.40) barely beats random "

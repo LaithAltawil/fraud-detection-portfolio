@@ -151,24 +151,48 @@ def render() -> None:
     )
 
     # --- Geography / merchants --------------------------------------------
-    st.markdown("### 6 · Geography and merchants")
+    st.markdown("### 6 · Geography")
+    st.markdown(
+        "`merchant_state` mixes US state codes with **country names**, so the two are "
+        "split — otherwise one high-fraud country dominates the domestic view."
+    )
+    region = pd.DataFrame(load_json("eda_by_region.json"))
+    fig = px.bar(region, x="region", y="fraud_rate", text="n", title="Fraud rate: domestic vs international")
+    fig.update_traces(marker_color=RED)
+    st.plotly_chart(style_fig(fig, 320), width="stretch")
+    intl = region.loc[region["region"] == "international"]
+    if not intl.empty:
+        callout(
+            f"International merchants carry a far higher fraud rate "
+            f"(<b>{intl['fraud_rate'].iloc[0] * 100:.2f}%</b>) than US states "
+            f"(~0.1%) — cross-border transactions are a genuine risk signal."
+        )
+
     left, right = st.columns(2)
     state = pd.DataFrame(load_json("eda_by_state.json")).sort_values("fraud_rate")
-    fig = px.bar(state, x="fraud_rate", y="state", orientation="h", title="Top states by fraud rate")
-    fig.update_traces(marker_color=RED)
-    left.plotly_chart(style_fig(fig, 460), width="stretch")
+    fig = px.bar(state, x="fraud_rate", y="state", orientation="h", title="Fraud rate by US state (top 15)")
+    fig.update_traces(marker_color=ACCENT)
+    left.plotly_chart(style_fig(fig, 420), width="stretch")
 
+    country = pd.DataFrame(load_json("eda_by_country.json")).sort_values("fraud_rate")
+    fig = px.bar(country, x="fraud_rate", y="country", orientation="h", title="Fraud rate by merchant country")
+    fig.update_traces(marker_color=RED)
+    right.plotly_chart(style_fig(fig, 420), width="stretch")
+
+    st.markdown("### 7 · Merchants")
     merchants = pd.DataFrame(load_json("eda_top_merchants.json")).sort_values("frauds")
     merchants["label"] = merchants["city"] + " · " + merchants["category"].astype(str).str[:22]
     fig = px.bar(merchants, x="frauds", y="label", orientation="h", title="Merchants with most frauds")
     fig.update_traces(marker_color=TEAL)
-    right.plotly_chart(style_fig(fig, 460), width="stretch")
+    st.plotly_chart(style_fig(fig, 420), width="stretch")
 
     st.markdown("### What this told us")
     st.markdown(
         """
 - Fraud is **time-dependent** and **behavioural**, not a fixed property of an
   amount, category or customer band.
+- **International** merchant locations are strongly over-represented in fraud,
+  while US states are comparatively flat.
 - No single raw field separates the classes — the signal lives in **deviation from
   each card's own history**.
 - These findings directly shaped the feature set: calendar features plus per-card

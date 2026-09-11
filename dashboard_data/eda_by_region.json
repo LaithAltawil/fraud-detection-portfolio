@@ -1,0 +1,17 @@
+[
+  {
+    "region": "international",
+    "n": 59512,
+    "fraud_rate": 0.0557702648
+  },
+  {
+    "region": "unknown",
+    "n": 1047865,
+    "fraud_rate": 0.0083779876
+  },
+  {
+    "region": "US state",
+    "n": 7807586,
+    "fraud_rate": 0.0001580514
+  }
+]

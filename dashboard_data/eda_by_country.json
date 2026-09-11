@@ -1,0 +1,77 @@
+[
+  {
+    "country": "Haiti",
+    "n": 264,
+    "fraud_rate": 0.9583333333
+  },
+  {
+    "country": "Italy",
+    "n": 4706,
+    "fraud_rate": 0.6504462388
+  },
+  {
+    "country": "South Korea",
+    "n": 770,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Hong Kong",
+    "n": 391,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Norway",
+    "n": 245,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Dominican Republic",
+    "n": 1035,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Brazil",
+    "n": 549,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Denmark",
+    "n": 236,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "France",
+    "n": 1941,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Canada",
+    "n": 7156,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Germany",
+    "n": 2022,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "China",
+    "n": 1913,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Philippines",
+    "n": 437,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "India",
+    "n": 1105,
+    "fraud_rate": 0.0
+  },
+  {
+    "country": "Jamaica",
+    "n": 772,
+    "fraud_rate": 0.0
+  }
+]

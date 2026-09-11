@@ -14,6 +14,7 @@ from common import (
     callout,
     load_json,
     load_parquet,
+    metrics_glossary,
     page_header,
     style_fig,
 )
@@ -52,6 +53,14 @@ def render() -> None:
         width="stretch",
         hide_index=True,
     )
+
+    with st.expander("What these metrics mean & why we chose them", expanded=False):
+        metrics_glossary()
+        st.markdown(
+            "**Why this matters:** with 0.176% positives, accuracy would be ~99.9% for a "
+            "model that predicts nothing. We therefore rank with PR-AUC and pick the cut-off "
+            "from a dollar-cost curve."
+        )
 
     left, right = st.columns(2)
     pr = pd.DataFrame(load_json("pr_curve.json"))
