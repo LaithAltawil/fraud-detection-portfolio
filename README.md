@@ -6,214 +6,216 @@
 ![Tests](https://img.shields.io/badge/tests-8%20passing-success)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
-An end-to-end fraud detection system on **13,305,915 synthetic card transactions**
-(**0.10% fraud**) — a DuckDB data layer, leakage-safe causal features, a
-cost-aware LightGBM model, an honest unsupervised benchmark, and a nine-page
-interactive dashboard.
+A production-style fraud detection system built on **13,305,915 card
+transactions** (**0.10% fraud**). It covers the full delivery lifecycle — data
+engineering, exploratory analysis, leakage-safe feature development, a
+cost-aware machine learning model, an evaluation framework aligned to business
+economics, and an interactive analytics dashboard.
 
-> **The one-sentence pitch for an interviewer:** I built the full pipeline a fraud
-> team would own — raw files → SQL data layer → causal features → cost-aware
-> ranking model → dashboard — and it catches ~30% of fraud at a 1% false-positive
-> budget while documenting, honestly, where the unsupervised approach fails.
+The model catches **~30% of fraud at a 1% false-positive rate** and identifies
+the riskiest 0.1% of transactions with a **78× lift** over the base rate, while
+supporting a decision threshold driven by the financial cost of fraud versus
+manual review.
 
 ---
 
 ## Contents
-- [Highlights](#highlights)
-- [The problem](#the-problem)
+- [At a glance](#at-a-glance)
+- [Business context](#business-context)
 - [Dataset](#dataset)
-- [Architecture](#architecture)
-- [Quickstart](#quickstart)
+- [Approach](#approach)
 - [Results](#results)
 - [Metrics & why they were chosen](#metrics--why-they-were-chosen)
-- [Interactive dashboard](#interactive-dashboard-multipage)
-- [What I learned](#what-i-learned-interview-talking-points)
-- [Project layout](#project-layout)
-- [Limitations & next steps](#limitations--next-steps)
+- [Interactive dashboard](#interactive-dashboard)
+- [Technology](#technology)
+- [Project structure](#project-structure)
+- [Running the project](#running-the-project)
+- [Limitations & future work](#limitations--future-work)
 
-## Highlights
-- **13.3M rows / 1.2 GB** processed out-of-core with **DuckDB** — no in-memory pandas.
-- **Leakage-safe features** computed with prior-only window functions, validated on a
-  **chronological** 70/15/15 split.
-- **LightGBM** reaches **ROC-AUC 0.943** and **PR-AUC 0.055** (7× the logistic
-  baseline), catching **~30% of fraud at a 1% FPR** and finding fraud in the
-  riskiest 0.1% at a **78× lift** over the base rate.
-- **Cost-aware threshold** chosen from a dollar matrix (`missed × $200 + review × $5`).
-- **Honest negative result:** Isolation Forest (ROC 0.40) and LOF (ROC 0.55) fail —
-  fraud is *not* an outlier, so labels and behavioural features are what matter.
-- **Nine-page Streamlit dashboard** that runs with no raw data via a small committed bundle.
+## At a glance
+- **Scale:** 13.3M transactions / 1.2 GB processed out-of-core — no sampling required.
+- **Performance:** LightGBM reaches **ROC-AUC 0.943** and **PR-AUC 0.055**, a **7×**
+  improvement over a logistic-regression baseline.
+- **Business value:** catches **~30% of fraud at a 1% false-positive rate** and
+  **13.7% precision in the riskiest 0.1%** of transactions.
+- **Decision economics:** the alert threshold is selected to minimise
+  `missed_fraud × cost + false_alarm × cost`, not to maximise accuracy.
+- **Interpretability:** every prediction rests on transparent, per-card
+  behavioural features (amount deviation, merchant novelty, transaction velocity).
 
-## The problem
-Fraud is the canonical **extreme class-imbalance** problem: 1 fraud per ~1,000
-transactions. **Accuracy is meaningless** — a model that always predicts
-"legitimate" scores 99.9% and catches nothing. What actually matters is:
+## Business context
+Fraud detection is a high-stakes, extreme-imbalance problem: roughly **1 fraud per
+1,000 transactions**. In this setting **accuracy is meaningless** — a system that
+approves every transaction is 99.9% accurate and prevents zero fraud.
 
-1. **Ranking** transactions by risk (who should a human look at first?), and
-2. choosing a decision threshold from the **business cost** of a missed fraud
-   versus a false alarm.
+What matters to a fraud operations team is:
+1. **Prioritisation** — which transactions should a human review first?
+2. **Economics** — how many frauds are caught, and at what cost in false alarms?
 
-This project builds that whole system and reports the metrics a fraud team owns.
+This system is designed around those two questions, and reports the metrics that
+reflect them.
 
 ## Dataset
-Five synthetic files. `transactions_data.csv` is 1.2 GB / 13.3M rows.
+Five related files are joined into a single transaction fact table.
 
 | File | Rows | Key fields |
 |---|---|---|
-| `transactions_data.csv` | 13,305,915 | id, timestamp, client/card id, amount, channel, merchant id/city/state, zip, MCC, errors |
+| `transactions_data.csv` | 13,305,915 | id, timestamp, client/card id, amount, channel, merchant id/city/state, zip, MCC code, errors |
 | `users_data.csv` | 2,000 | demographics, address, income, debt, credit score |
-| `cards_data.csv` | 6,146 | brand, type, number, expiry, chip, credit limit, dark-web flag |
+| `cards_data.csv` | 6,146 | brand, type, card number, expiry, chip, credit limit, dark-web flag |
 | `mcc_codes.json` | 109 | merchant category code → description |
 | `train_fraud_labels.json` | 8,915,963 | transaction id → fraud Yes/No |
 
-**Data quirks handled once, in the data layer (`data.py`):**
-- `amount` / incomes / limits are **currency strings** (`"$-77.00"`) → parsed via a `money()` SQL helper.
-- Only **8.9M of 13.3M** rows are labeled → unlabeled rows stay `NULL`, never 0.
-- The 151 MB nested label JSON **stalled DuckDB's JSON reader** → replaced with a streaming `JSONDecoder.raw_decode` parser cached to Parquet.
-- `merchant_state` mixes **US state codes with country names** (Italy, Canada, …).
+**Data quality is handled in one place (the data layer):**
+- Monetary fields arrive as **currency strings** (`"$-77.00"`, `"$59,696"`) and are parsed centrally.
+- Only **8.9M of 13.3M** transactions carry a label; unlabeled rows are preserved as
+  `NULL` so the model never trains on fabricated negatives.
+- A 151 MB nested label file that stalled the default JSON reader is parsed with a
+  streaming decoder and cached to a columnar format.
+- `merchant_state` mixes **US states with country names**, which are separated for analysis.
 
-## Architecture
+## Approach
 ```
-raw CSVs/JSON ──▶ DuckDB views ──▶ causal feature table (Parquet)
-                     │                        │
-                     │                        ├─▶ supervised  (LightGBM, cost-aware threshold)
-                     │                        ├─▶ unsupervised (Isolation Forest / LOF)
-                     │                        └─▶ dashboard   (multipage Streamlit)
-                     └─▶ EDA
-```
-
-## Quickstart
-The raw data is expected at `../archive` (see `config/config.yaml`).
-
-```bash
-uv sync --extra dashboard --extra dev     # or: pip install -r requirements.txt
-
-uv run python scripts/01_eda.py             # summary + report figures
-uv run python scripts/02_build_features.py  # artifacts/features.parquet
-uv run python scripts/03_train.py           # baseline + LightGBM + metrics
-uv run python scripts/04_unsupervised.py    # Isolation Forest + LOF
-uv run python scripts/06_export_dashboard.py# small dashboard_data/ bundle
-uv run python scripts/05_dashboard.py       # launch the multipage app
-
-uv run pytest -q && uv run ruff check . && uv run mypy src
+Raw CSVs / JSON ──▶ SQL data layer ──▶ causal feature table (Parquet)
+                         │                         │
+                         │                         ├─▶ Supervised model (LightGBM, cost-aware threshold)
+                         │                         ├─▶ Unsupervised benchmark (Isolation Forest / LOF)
+                         │                         └─▶ Interactive dashboard
+                         └─▶ Exploratory analysis
 ```
 
-Set `features.sample_rows` in `config/config.yaml` for a fast local smoke test.
+Highlights of the engineering:
+- **Out-of-core processing.** A columnar SQL engine (DuckDB) queries the full
+  1.2 GB dataset directly, keeping memory usage predictable.
+- **Leakage-safe features.** Every behavioural feature uses only transactions that
+  occurred *before* the one being scored (prior-only window functions). This
+  mirrors how a deployed model actually sees data.
+- **Chronological validation.** Data is split **70/15/15 by time**, not at random,
+  because cardholder behaviour repeats and fraud trends shift over time.
+- **Cost-aware decisions.** The classification threshold is chosen from a business
+  cost curve rather than a default 0.5.
 
 ## Results
-Test window = the most recent 15% of the labeled timeline (**1,337,243** transactions,
-**2,353** frauds, base rate **0.176%**). Chronological, so these are true
-future-performance numbers.
+Test window = the most recent 15% of the timeline (**1,337,243** transactions,
+**2,353** frauds, base rate **0.176%**).
 
-| Model | PR-AUC | ROC-AUC | Recall @ 1% FPR | Precision @ top 0.1% | Cost / txn |
+| Model | PR-AUC | ROC-AUC | Recall @ 1% FPR | Precision @ top 0.1% | Cost / transaction |
 |---|---|---|---|---|---|
 | Logistic regression (baseline) | 0.0077 | 0.856 | 0.053 | 0.017 | $0.351 |
 | **LightGBM (final)** | **0.0555** | **0.943** | **0.297** | **0.137** | **$0.295** |
 
-LightGBM lifts **PR-AUC 7×** over the baseline and finds **13.7%** precision in
-the riskiest 0.1% of transactions — a **78× lift** over the 0.176% base rate —
-while catching ~30% of fraud at a 1% false-positive budget.
+The final model provides a **7× PR-AUC improvement** over the baseline and finds
+fraud in the riskiest 0.1% of transactions at **78× the base rate**.
 
-### Unsupervised extension (negative result)
-Fitting Isolation Forest and LOF on legitimate transactions and scoring the test
-window did **not** work:
+### Unsupervised benchmark
+As a comparison, anomaly-detection methods were fitted without labels and scored
+against the held-out ground truth:
 
 | Detector | PR-AUC | ROC-AUC |
 |---|---|---|
 | Isolation Forest | 0.0014 | 0.396 |
 | Local Outlier Factor | 0.0025 | 0.549 |
 
-Fraud here is **not an outlier** in behavioural feature space — it looks
-statistically ordinary. This is a genuine finding, not a bug: it shows why
-label-supervised methods dominate and frames unsupervised detection as a
-screening layer, not a decision-maker.
+The result is clear and useful: fraud in this dataset is **not an outlier** purely
+by statistical distribution — it looks ordinary. The supervised, label-driven
+behavioural features are what make detection possible. This establishes that
+unsupervised methods serve as a **screening layer**, not a final decision-maker.
 
 ### What drives detection
-Behavioural, label-supervised features do the work: **how unusual an amount is for
-that card** (`amount_z`), **how novel the merchant is**
-(`card_merchant_prior_count`), and **how long since the card last transacted**
-(`sec_since_prev_txn`). Conversely, **international merchant locations carry a
-5.6% fraud rate** versus ~0.016% for US states — a strong geographic signal.
+Behavioural features do the heavy lifting:
+- **`amount_z`** — how unusual a transaction amount is for that specific card.
+- **`card_merchant_prior_count`** — how novel the merchant is to the card.
+- **`sec_since_prev_txn`** — the time since the card last transacted.
+
+Geography is another strong signal: **international merchants carry a 5.6% fraud
+rate versus ~0.016% for US states.**
 
 ## Metrics & why they were chosen
-At a 0.176% base rate the choice of metric *is* the project. This is what the
-dashboard reports and why:
+With a 0.176% base rate, the choice of metric is central to the project.
 
-| Metric | What it measures | Why we use it |
+| Metric | What it measures | Why it is used |
 |---|---|---|
-| **Accuracy** | Correct predictions / all | **Rejected** — 99.9% for a model that predicts nothing |
-| **ROC-AUC** | Chance a random fraud outranks a random legit txn | Familiar, but **optimistic** under extreme imbalance |
-| **PR-AUC** (average precision) | Area under the precision-recall curve | **Headline** — rewards the rare positive class only |
-| **Recall @ x% FPR** | Fraud caught while false alarms ≤ x% | Maps to a **fixed review budget** |
-| **Precision @ top k%** | Accuracy among the riskiest k% | Is the **alert queue usable**? |
-| **Cost / transaction** | `missed × $200 + review × $5`, per txn | Puts a **dollar value** on the trade-off |
+| **Accuracy** | Correct predictions / all predictions | **Rejected** — 99.9% for a model that blocks nothing |
+| **ROC-AUC** | Chance a random fraud ranks above a random legitimate transaction | Familiar summary, but optimistic under extreme imbalance |
+| **PR-AUC** (average precision) | Area under the precision-recall curve | **Headline metric** — focuses on the rare positive class |
+| **Recall @ x% FPR** | Fraud caught while false alarms stay ≤ x% | Directly maps to a review-team budget |
+| **Precision @ top k%** | Accuracy among the riskiest k% | Indicates whether the alert queue is actionable |
+| **Cost / transaction** | Missed fraud and false alarms priced together | Expresses performance in financial terms |
 
-The decision **threshold is not 0.5** — it is chosen to minimise the cost above.
-The `$200 / $5` matrix is an explicit assumption in `config/config.yaml` so it can
-be re-tuned to a real cost structure.
+The decision threshold is not fixed at 0.5. It is selected to **minimise total
+cost** (`$200` per missed fraud, `$5` per manual review) — an assumption kept in
+configuration so it can be tuned to any organisation's cost structure.
 
-## Interactive dashboard (multipage)
-A nine-page Streamlit app explains **everything done with the data**:
+## Interactive dashboard
+A nine-page Streamlit application presents the full analysis for both technical
+and business audiences:
 
-| Page | What it explains |
+| Page | Contents |
 |---|---|
-| **Executive summary** | Problem, KPIs, headline results, negative result, pipeline |
-| **Data & pipeline** | The five files, quirks handled, DuckDB joins, why out-of-core |
-| **Exploratory analysis** | 15 charts: time, hour, weekday, night/weekend, amount, category, channel, card brand/type, credit band, geography (US vs international), merchants |
-| **Features & split** | Causal window-function features and the 70/15/15 chronological split |
-| **Supervised model** | Baseline vs LightGBM, PR curve, feature importance, cost curve, top risk |
-| **Results, explained** | Metric glossary, ROC/PR curves, confusion matrix at the optimal threshold, decile lift, budget trade-offs, savings |
-| **Unsupervised extension** | Isolation Forest / LOF vs supervised, why it failed |
-| **Models & usage** | What each of the four models is for and how to run it |
-| **Insights** | Drivers, decisions, next steps |
+| **Executive summary** | Key performance indicators, headline results, and the analysis pipeline |
+| **Data & pipeline** | Source files, data-quality handling, table joins, and out-of-core processing |
+| **Exploratory analysis** | 15 charts: fraud over time, hour, weekday, amount, category, channel, card type, credit band, geography, and merchants |
+| **Features & split** | The causal feature set and the chronological train/validation/test split |
+| **Supervised model** | Baseline vs final model, precision-recall curve, feature importance, and cost curve |
+| **Results, explained** | Metric definitions, ROC/PR curves, confusion matrix at the chosen threshold, decile lift, and review-budget trade-offs |
+| **Unsupervised extension** | Isolation Forest / LOF compared against the supervised model |
+| **Models & usage** | Purpose, inputs/outputs, and commands for each model |
+| **Insights** | Key drivers, engineering decisions, and next steps |
 
-It reads a small committed `dashboard_data/` bundle (~1 MB), so it runs with **no
-raw data**.
+The dashboard runs from a small, self-contained data bundle, so it presents
+without requiring access to the full dataset.
 
-### Deploy to Streamlit Community Cloud
-1. Open <https://share.streamlit.io> → **New app** → select this repo.
-2. **Main file path:** `dashboard/app.py`
-3. Deploy. Streamlit installs `requirements.txt` and serves the app from the committed bundle.
+## Technology
+| Layer | Tools |
+|---|---|
+| Language | Python 3.11+ |
+| Data engine | DuckDB, Polars, pandas, PyArrow |
+| Machine learning | LightGBM, scikit-learn |
+| Visualisation | Streamlit, Plotly, Matplotlib |
+| Quality | pytest, Ruff, mypy |
+| Configuration | YAML, `uv` |
 
-## What I learned (interview talking points)
-- **`scale_pos_weight` backfired.** Weighting the 1:1000 imbalance collapsed ranking
-  (ROC 0.93 → 0.60). Ranking metrics + a cost threshold beat reweighting the loss.
-- **More features ≠ better.** Merchant/category categoricals *reduced* ROC from
-  0.92 to 0.86; behavioural velocity features carried the signal (ablation is
-  configurable via `features.use_categoricals`).
-- **Only 8.9M of 13.3M rows are labeled** — training must restrict to labeled rows.
-- **Time-based splits matter.** A 2M-row early sample had *zero* fraud in its
-  validation window, because fraud clusters in time.
-- **Not all "state" values are states.** `merchant_state` mixes countries; splitting
-  them revealed international merchants as a strong fraud signal.
-
-## Project layout
+## Project structure
 ```
 config/config.yaml          # paths, split fractions, hyperparameters, cost matrix
 src/fraud_detection/
-  config.py                 # typed config loader
-  data.py                   # DuckDB views + enriched fact table + label parser
+  config.py                 # typed configuration loader
+  data.py                   # SQL views, fact table, and label parser
   features.py               # causal feature engineering
-  split.py                  # chronological train/valid/test split
+  split.py                  # chronological train/validation/test split
   evaluate.py               # PR-AUC, recall@FPR, precision@k, cost curve
   train.py                  # logistic baseline + LightGBM + feature importance
-  unsupervised.py           # Isolation Forest / LOF extension
-  export_dashboard.py       # builds the small dashboard_data/ bundle
-scripts/                    # 01_eda → 06_export_dashboard CLI entry points
-dashboard/                  # multipage Streamlit app (deploy: dashboard/app.py)
-  app.py                    # entrypoint + navigation
-  common.py                 # theme, bundle loaders, metric glossary
-  sections/                 # one module per page
-dashboard_data/             # small, committed bundle that powers the dashboard
-.streamlit/config.toml      # dashboard theme
-tests/                      # unit tests (label parser, features, metrics)
+  unsupervised.py           # Isolation Forest / LOF benchmark
+  export_dashboard.py       # builds the dashboard data bundle
+scripts/                    # 01_eda → 06_export_dashboard command-line entry points
+dashboard/                  # multipage Streamlit application
+dashboard_data/             # small, self-contained data bundle for the dashboard
+tests/                      # unit tests for the parser, features, and metrics
 ```
 
-## Limitations & next steps
-- **Synthetic labels** — absolute precision/recall depend on the generator; the
-  methodology, not the exact number, is the point.
-- **Cost constants are assumed** ($200/$5) — tune with real fraud-loss figures.
-- **Next:** SHAP per-transaction explanations, a FastAPI `/score` endpoint with
-  Docker, and drift monitoring on feature distributions over time.
+## Running the project
+The raw data is expected at `../archive` (see `config/config.yaml`).
 
-## References
-- Repo: https://github.com/LaithAltawil/fraud-detection-portfolio
+```bash
+uv sync --extra dashboard --extra dev      # or: pip install -r requirements.txt
+
+uv run python scripts/01_eda.py             # summary and report figures
+uv run python scripts/02_build_features.py  # build the feature table
+uv run python scripts/03_train.py           # train and evaluate the models
+uv run python scripts/04_unsupervised.py    # unsupervised benchmark
+uv run python scripts/06_export_dashboard.py# build the dashboard bundle
+uv run python scripts/05_dashboard.py       # launch the dashboard
+
+uv run pytest -q && uv run ruff check . && uv run mypy src   # quality checks
+```
+
+A fast local smoke test is available by setting `features.sample_rows` in the
+configuration file.
+
+## Limitations & future work
+- **Synthetic data.** Absolute precision and recall depend on the data generator;
+  the methodology, not the exact figure, is the deliverable.
+- **Assumed costs.** The `$200` / `$5` cost constants should be replaced with an
+  organisation's real fraud-loss figures.
+- **Next steps.** Per-transaction explanations (SHAP), a real-time scoring API,
+  and drift monitoring on feature distributions over time.
