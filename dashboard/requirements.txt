@@ -1,0 +1,11 @@
+# Runtime dependencies for the deployed dashboard.
+# This file sits next to app.py, so Streamlit Community Cloud auto-detects it
+# first (takes precedence over the root uv.lock / full requirements.txt).
+#
+# The dashboard imports only these packages - the training stack (DuckDB, Polars,
+# LightGBM, scikit-learn) is NOT required at runtime, which keeps builds light.
+streamlit>=1.49
+plotly>=5.24
+pandas>=2.2
+numpy>=1.26
+pyarrow>=17.0
